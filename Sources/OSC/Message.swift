@@ -13,7 +13,7 @@ public struct Message {
         case B(Data)
     }
     let address: String
-    var elements: Array<Element>
+    var elements: Array<Element> = []
 }
 extension Message {
     mutating func append(_ value: some BinaryInteger) {
