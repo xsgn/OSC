@@ -1,19 +1,77 @@
 //
-//  File.swift
+//  Message.swift
 //  
 //
-//  Created by Kota Nakano on 10/28/22.
+//  Created by kotan.kn on 10/28/22.
 //
-import Foundation
+import Foundation.NSData
 public struct Message {
-    enum Element {
+    fileprivate enum Element {
         case S(String)
         case I(Int32)
         case F(Float32)
         case B(Data)
     }
     let address: String
-    var elements: Array<Element> = []
+    fileprivate var elements: Array<Element>
+    init(address target: String) {
+        address = target
+        elements = []
+    }
+    init(parse memory: Data) throws {
+        var cursor = 0
+        do {
+            var a = Array<UInt8>()
+            while cursor < memory.count, memory[cursor] != 0 {
+                a.append(memory[cursor])
+                cursor += 1
+            }
+            self.init(address: .init(cString: a))
+            cursor += 4 - cursor % 4
+        }
+        guard memory[cursor] == 0x2C else { fatalError() }
+        do {
+            var h = Array<UInt8>()
+            while cursor < memory.count, memory[cursor] != 0 {
+                h.append(memory[cursor])
+                cursor += 1
+            }
+            cursor += 4 - cursor % 4
+            h.forEach {
+                switch $0 {
+                case 0x73://S
+                    var s = Array<UInt8>()
+                    while cursor < memory.count, memory[cursor] != 0 {
+                        s.append(memory[cursor])
+                        cursor += 1
+                    }
+                    append(String(cString: s))
+                    cursor += 4 - cursor % 4
+                case 0x69://I
+                    let i = (0..<4).reduce(UInt32(0)) {
+                        $0 << 8 + Int32(memory[cursor + $1])
+                    }
+                    append(Int32(bitPattern: i))
+                    cursor += 4
+                case 0x66://F
+                    let i = (0..<4).reduce(UInt32(0)) {
+                        $0 << 8 + Int32(memory[cursor + $1])
+                    }
+                    append(Float32(bitPattern: i))
+                    cursor += 4
+                case 0x62://B
+                    let i = (0..<4).reduce(UInt32(0)) {
+                        $0 << 8 + Int32(memory[cursor + $1])
+                    }
+                    append(Data(buffer: [i]))
+                    cursor += 4
+                default:
+                    break
+                }
+            }
+        }
+        print(self)
+    }
 }
 extension Message {
     mutating func append(_ value: some BinaryInteger) {
@@ -24,6 +82,12 @@ extension Message {
     }
     mutating func append(_ value: String) {
         elements.append(.S(value))
+    }
+    mutating func append(_ data: Data) {
+        precondition(data.count % 0x4 == 0, "blob length should be 4-aligned")
+        stride(from: 0, to: data.count, by: 4).forEach {
+            elements.append(.B(data[$0..<$0+4]))
+        }
     }
 }
 extension Data {
@@ -44,7 +108,7 @@ extension Data {
     }
     public init(message: Message) {
         self.init(count: 0)
-        var head = Array<UInt8>()
+        var head = [0x2C] as Array<UInt8>
         var body = Data()
         message.elements.forEach {
             switch $0 {
@@ -57,8 +121,9 @@ extension Data {
             case.F(let f):
                 head.append(0x66)
                 body.append(data(byte: f.bitPattern))
-            case.B(let b) where b.count == 4:
-                fatalError()
+            case.B(let b) where b.count <= 4:
+                head.append(0x62)
+                body.append(data(wrap: b))
             default:
                 fatalError()
             }

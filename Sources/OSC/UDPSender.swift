@@ -1,8 +1,8 @@
 //
-//  File.swift
+//  UDPSender.swift
 //  
 //
-//  Created by Kota Nakano on 10/27/22.
+//  Created by kotan.kn on 10/27/22.
 //
 import Network
 public struct UDPSender {
