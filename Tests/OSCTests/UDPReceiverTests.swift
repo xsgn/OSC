@@ -5,7 +5,7 @@
 //  Created by Kota Nakano on 10/28/22.
 //
 import XCTest
-@testable import OSC
+import OSC
 import AVFoundation
 final class UDPReceiverTestCases: XCTestCase {
     final func testAsciiCode() {
@@ -18,14 +18,20 @@ final class UDPReceiverTestCases: XCTestCase {
 //        message.append(10.0)
 //        message.append("hello")
 //        message.append(200)
-//        UDPSender().send(to: ("127.0.0.1", 5005), data: .init(message: message))
+//        UDPSender().send(to: ("127.0.0.1", 5005), message: message)
 //    }
 //    final func testReceive() {
-//        withExtendedLifetime(DispatchSource.udpSource(v4: "127.0.0.1", port: 5005) {
+//        withExtendedLifetime(DispatchSource.udpOSC(v4: "127.0.0.1", port: 5005) {
 //            do {
-//                try print(Message(parse: $0))
+//                let message = try $0.get()
+//                switch message.address {
+//                case "/filter":
+//                    break
+//                default:
+//                    break
+//                }
 //            } catch {
-//                XCTFail(error.localizedDescription)
+//
 //            }
 //            return.none
 //        }, RunLoop.current.run)

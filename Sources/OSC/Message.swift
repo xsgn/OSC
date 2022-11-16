@@ -12,15 +12,17 @@ enum ASCII: UInt8, CaseIterable {
     case s = 0x73
 }
 public struct Message {
-    fileprivate enum Element {
+    @usableFromInline
+    internal enum Element {
         case S(String)
         case I(Int32)
         case F(Float32)
         case B(Data)
     }
-    let address: String
-    fileprivate var elements: Array<Element>
-    init(address target: String) {
+    public let address: String
+    @usableFromInline
+    internal var elements: Array<Element>
+    public init(address target: String) {
         address = target
         elements = []
     }
@@ -81,16 +83,21 @@ public struct Message {
     }
 }
 extension Message {
+    @inlinable
+    @inline(__always)
     public func unwrap(at index: Int) -> (String?, Int32?, Float32?, Data?) {
-        guard index < elements.count else { return(.none, .none, .none, .none) }
+        guard elements.indices.contains(index) else { return(.none, .none, .none, .none) }
         return elements[index].unwrap
     }
+    @inlinable
+    @inline(__always)
     public subscript(at index: Int) -> Optional<Any> {
         guard elements.indices.contains(index) else { return.none }
         return.some(elements[index].value)
     }
 }
 extension Message.Element {
+    @inlinable
     @inline(__always)
     var unwrap: (String?, Int32?, Float32?, Data?) {
         switch self {
@@ -104,6 +111,7 @@ extension Message.Element {
             return (.none, .none, .none, b)
         }
     }
+    @inlinable
     @inline(__always)
     var value: Any {
         switch self {
@@ -119,6 +127,8 @@ extension Message.Element {
     }
 }
 extension Message : CustomStringConvertible {
+    @inlinable
+    @inline(__always)
     public var description: String {
         address + " " + elements.map {
             switch $0 {
@@ -135,15 +145,23 @@ extension Message : CustomStringConvertible {
     }
 }
 extension Message {
+    @inlinable
+    public
     mutating func append(_ value: some BinaryInteger) {
         elements.append(.I(.init(value)))
     }
+    @inlinable
+    public
     mutating func append(_ value: some BinaryFloatingPoint) {
         elements.append(.F(.init(value)))
     }
+    @inlinable
+    public
     mutating func append(_ value: String) {
         elements.append(.S(value))
     }
+    @inlinable
+    public
     mutating func append(_ data: Data) {
         precondition(data.count % 0x4 == 0, "blob length should be 4-aligned")
         stride(from: 0, to: data.count, by: 4).forEach {
