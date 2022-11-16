@@ -12,8 +12,8 @@ private extension Int32 {
     @inline(__always)
     init(v4 host: String, port: UInt16) {
         self = socket(PF_INET, SOCK_DGRAM, 0)
-        let status = sockaddr_in(host: host, port: port).asSockAddr {
-            bindresvport_sa(self, .init(mutating: $0))
+        let status = sockaddr_in(host: host, port: port).Sockaddr { (mem, _) in
+            bindresvport_sa(self, .init(mutating: mem))
         }
         precondition(status == 0, "bind failure")
     }
