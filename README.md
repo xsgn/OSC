@@ -21,11 +21,12 @@ sender.send(to: ("127.0.0.1", 5005), message: message)
 
 ```swift
 let source = DispatchSource.udpOSC(host: "127.0.0.1", port: 5005) {
-    switch $0.address {
+    let message = try!$0.get()
+    switch message.address {
         case "/address":
-            let freq = $0[0] as? Float32
-            let Q = $0[1] as? Float32
-            let index = $0[2] as? Int32
+            let freq = message[0] as? Float32
+            let Q = message[1] as? Float32
+            let index = message[2] as? Int32
         default:
             break
     } 

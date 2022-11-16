@@ -5,7 +5,7 @@
 //  Created by Kota Nakano on 10/28/22.
 //
 import XCTest
-import OSC
+@testable import OSC
 import AVFoundation
 final class UDPReceiverTestCases: XCTestCase {
     final func testAsciiCode() {
