@@ -4,11 +4,9 @@
 //
 //  Created by kotan.kn on 10/27/22.
 //
-import Foundation
-import Dispatch
-import Combine
-import Network
-private extension Int32 {
+import Foundation.NSData
+extension Int32 {
+    @inlinable
     @inline(__always)
     init(v4 host: String, port: UInt16) {
         self = socket(PF_INET, SOCK_DGRAM, 0)
@@ -18,7 +16,8 @@ private extension Int32 {
         precondition(status == 0, "bind failure")
     }
 }
-private extension Data {
+extension Data {
+    @inlinable
     @inline(__always)
     init(capacity: Int, byFilling: (UnsafeMutableRawBufferPointer) -> Optional<Int>) {
         self.init(count: capacity)
@@ -28,6 +27,7 @@ private extension Data {
     }
 }
 extension DispatchSource {
+    @inlinable
     @inline(__always)
     static func udpSource(v4 host: String, port: UInt16, work: @escaping(Data) -> Optional<Data>) -> DispatchSourceRead {
         let source = DispatchSource.makeReadSource(fileDescriptor: .init(v4: host, port: port), queue: .global(qos: .utility))
@@ -46,19 +46,16 @@ extension DispatchSource {
                              &len)
                 }
                 precondition(len == .init($0.count))
-                switch work(req) {
-                case.some(let res):
-                    let sent = res.withUnsafeBytes {
+                work(req).map {
+                    let sent = $0.withUnsafeBytes {
                         sendto(.init(source.handle),
                                $0.baseAddress,
                                $0.count,
                                0,
                                mem,
-                               .init(MemoryLayout<sockaddr_in>.size))
+                               len)
                     }
-                    precondition(sent == res.count)
-                case.none:
-                    break
+                    precondition(sent == $0.count)
                 }
             }
         }
@@ -70,7 +67,7 @@ extension DispatchSource {
         return source
     }
     @inline(__always)
-    public static func UdpOSC(v4 host: String, port: UInt16, handle: @escaping(Result<Message, Error>) -> Optional<Message>) -> DispatchSourceRead {
+    public static func udpOSC(v4 host: String, port: UInt16, handle: @escaping(Result<Message, Error>) -> Optional<Message>) -> DispatchSourceRead {
         udpSource(v4: host, port: port) {
             do {
                 return try handle(.success(.init(parse: $0))).map(Data.init)

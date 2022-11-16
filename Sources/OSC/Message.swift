@@ -24,6 +24,7 @@ public struct Message {
         address = target
         elements = []
     }
+    @inline(__always)
     init(parse memory: Data) throws {
         var cursor = 0
         do {

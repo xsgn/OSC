@@ -10,6 +10,7 @@ protocol SockaddrCompatible {
     func Sockaddr<R>(closure: (UnsafePointer<sockaddr>, UnsafePointer<socklen_t>) throws -> R) rethrows -> R
 }
 extension sockaddr_in {
+    @inlinable
     @inline(__always)
     init(host: String, port: UInt16) {
         self.init(sin_len: .init(MemoryLayout<Self>.size),
@@ -18,6 +19,7 @@ extension sockaddr_in {
                   sin_addr: .init(s_addr: inet_addr(host)),
                   sin_zero: (0, 0, 0, 0, 0, 0, 0, 0))
     }
+    @inlinable
     @inline(__always)
     init(byFilling: (UnsafeMutablePointer<sockaddr>?) -> Void) {
         self = .init()
@@ -27,6 +29,7 @@ extension sockaddr_in {
     }
 }
 extension sockaddr_in : SockaddrCompatible {
+    @inlinable
     @inline(__always)
     func Sockaddr<R>(closure: (UnsafePointer<sockaddr>, UnsafePointer<socklen_t>) throws -> R) rethrows -> R {
         try withUnsafePointer(to: self) {
@@ -36,6 +39,7 @@ extension sockaddr_in : SockaddrCompatible {
     }
 }
 extension sockaddr_in6 {
+    @inlinable
     @inline(__always)
     func asSockAddr<R>(closure: (UnsafePointer<sockaddr>) throws -> R) rethrows -> R {
         try withUnsafePointer(to: self) {
@@ -44,6 +48,7 @@ extension sockaddr_in6 {
     }
 }
 extension sockaddr_in6 : SockaddrCompatible {
+    @inlinable
     @inline(__always)
     func Sockaddr<R>(closure: (UnsafePointer<sockaddr>, UnsafePointer<socklen_t>) throws -> R) rethrows -> R {
         try withUnsafePointer(to: self) {
