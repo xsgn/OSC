@@ -8,19 +8,26 @@ import XCTest
 @testable import OSC
 import AVFoundation
 final class UDPReceiverTestCases: XCTestCase {
-//    final func testSend() async throws {
+    final func testAsciiCode() {
+        ASCII.allCases.forEach {
+            XCTAssertEqual($0.rawValue, String(describing: $0).first?.asciiValue)
+        }
+    }
+//    final func testSend() {
 //        var message = Message(address: "/filter")
 //        message.append(10.0)
 //        message.append("hello")
 //        message.append(200)
-//        try await UDPSender(to: ("127.0.0.1", 5005))
-//            .send(message: message)
+//        UDPSender().send(to: ("127.0.0.1", 5005), data: .init(message: message))
 //    }
-    final func testReceive() {
-        let k = DispatchSource.udpSource(v4: "127.0.0.1", port: 5005) {
-            print(1, $0)
-            return.none
-        }
-        withExtendedLifetime(k, RunLoop.main.run)
-    }
+//    final func testReceive() {
+//        withExtendedLifetime(DispatchSource.udpSource(v4: "127.0.0.1", port: 5005) {
+//            do {
+//                try print(Message(parse: $0))
+//            } catch {
+//                XCTFail(error.localizedDescription)
+//            }
+//            return.none
+//        }, RunLoop.current.run)
+//    }
 }
