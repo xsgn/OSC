@@ -5,6 +5,12 @@
 //  Created by kotan.kn on 10/28/22.
 //
 import Foundation.NSData
+enum ASCII: UInt8, CaseIterable {
+    case b = 0x62
+    case f = 0x66
+    case i = 0x69
+    case s = 0x73
+}
 public struct Message {
     fileprivate enum Element {
         case S(String)
@@ -26,6 +32,7 @@ public struct Message {
                 a.append(memory[cursor])
                 cursor += 1
             }
+            a.append(0)
             self.init(address: .init(cString: a))
             cursor += 4 - cursor % 4
         }
@@ -38,8 +45,8 @@ public struct Message {
             }
             cursor += 4 - cursor % 4
             h.forEach {
-                switch $0 {
-                case 0x73://S
+                switch ASCII(rawValue: $0) {
+                case.some(.s)://S
                     var s = Array<UInt8>()
                     while cursor < memory.count, memory[cursor] != 0 {
                         s.append(memory[cursor])
@@ -47,30 +54,83 @@ public struct Message {
                     }
                     append(String(cString: s))
                     cursor += 4 - cursor % 4
-                case 0x69://I
+                case.some(.i)://I
                     let i = (0..<4).reduce(UInt32(0)) {
-                        $0 << 8 + Int32(memory[cursor + $1])
+                        $0 << 8 + UInt32(memory[cursor + $1])
                     }
                     append(Int32(bitPattern: i))
                     cursor += 4
-                case 0x66://F
+                case.some(.f)://F
                     let i = (0..<4).reduce(UInt32(0)) {
-                        $0 << 8 + Int32(memory[cursor + $1])
+                        $0 << 8 + UInt32(memory[cursor + $1])
                     }
                     append(Float32(bitPattern: i))
                     cursor += 4
-                case 0x62://B
-                    let i = (0..<4).reduce(UInt32(0)) {
-                        $0 << 8 + Int32(memory[cursor + $1])
+                case.some(.b)://B
+                    let b = (0..<4).reduce(into: Data()) {
+                        $0.append(memory[cursor + $1])
                     }
-                    append(Data(buffer: [i]))
+                    append(b)
                     cursor += 4
                 default:
                     break
                 }
             }
         }
-        print(self)
+    }
+}
+extension Message {
+    public func unwrap(at index: Int) -> (String?, Int32?, Float32?, Data?) {
+        guard index < elements.count else { return(.none, .none, .none, .none) }
+        return elements[index].unwrap
+    }
+    public subscript(at index: Int) -> Optional<Any> {
+        guard elements.indices.contains(index) else { return.none }
+        return.some(elements[index].value)
+    }
+}
+extension Message.Element {
+    @inline(__always)
+    var unwrap: (String?, Int32?, Float32?, Data?) {
+        switch self {
+        case.S(let s):
+            return (s, .none, .none, .none)
+        case.I(let i):
+            return (.none, i, .none, .none)
+        case.F(let f):
+            return (.none, .none, f, .none)
+        case.B(let b):
+            return (.none, .none, .none, b)
+        }
+    }
+    @inline(__always)
+    var value: Any {
+        switch self {
+        case.S(let s):
+            return s
+        case.I(let i):
+            return i
+        case.F(let f):
+            return f
+        case.B(let b):
+            return b
+        }
+    }
+}
+extension Message : CustomStringConvertible {
+    public var description: String {
+        address + " " + elements.map {
+            switch $0 {
+            case.S(let s):
+                return s
+            case.F(let f):
+                return String(describing: f)
+            case.I(let i):
+                return String(describing: i)
+            case.B(let b):
+                return String(describing: b)
+            }
+        }.joined(separator: ", ")
     }
 }
 extension Message {
@@ -113,16 +173,16 @@ extension Data {
         message.elements.forEach {
             switch $0 {
             case.S(let s):
-                head.append(0x73)
+                head.append(ASCII.s.rawValue)
                 body.append(data(wrap: s))
             case.I(let i):
-                head.append(0x69)
+                head.append(ASCII.i.rawValue)
                 body.append(data(byte: i))
             case.F(let f):
-                head.append(0x66)
+                head.append(ASCII.f.rawValue)
                 body.append(data(byte: f.bitPattern))
             case.B(let b) where b.count <= 4:
-                head.append(0x62)
+                head.append(ASCII.b.rawValue)
                 body.append(data(wrap: b))
             default:
                 fatalError()
