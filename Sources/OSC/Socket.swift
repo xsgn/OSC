@@ -5,6 +5,10 @@
 //  Created by kotan.kn on 11/15/22.
 //
 import Foundation
+protocol SockaddrCompatible {
+    @inline(__always)
+    func Sockaddr<R>(closure: (UnsafePointer<sockaddr>, UnsafePointer<socklen_t>) throws -> R) rethrows -> R
+}
 extension sockaddr_in {
     @inline(__always)
     init(host: String, port: UInt16) {
@@ -21,10 +25,13 @@ extension sockaddr_in {
             byFilling($0.baseAddress?.assumingMemoryBound(to: sockaddr.self))
         }
     }
+}
+extension sockaddr_in : SockaddrCompatible {
     @inline(__always)
-    func asSockAddr<R>(closure: (UnsafePointer<sockaddr>) throws -> R) rethrows -> R {
+    func Sockaddr<R>(closure: (UnsafePointer<sockaddr>, UnsafePointer<socklen_t>) throws -> R) rethrows -> R {
         try withUnsafePointer(to: self) {
-            try closure(UnsafeRawPointer($0).assumingMemoryBound(to: sockaddr.self))
+            var len = socklen_t(sin_len)
+            return try closure(UnsafeRawPointer($0).assumingMemoryBound(to: sockaddr.self), &len)
         }
     }
 }
@@ -33,6 +40,15 @@ extension sockaddr_in6 {
     func asSockAddr<R>(closure: (UnsafePointer<sockaddr>) throws -> R) rethrows -> R {
         try withUnsafePointer(to: self) {
             try closure(UnsafeRawPointer($0).assumingMemoryBound(to: sockaddr.self))
+        }
+    }
+}
+extension sockaddr_in6 : SockaddrCompatible {
+    @inline(__always)
+    func Sockaddr<R>(closure: (UnsafePointer<sockaddr>, UnsafePointer<socklen_t>) throws -> R) rethrows -> R {
+        try withUnsafePointer(to: self) {
+            var len = socklen_t(sin6_len)
+            return try closure(UnsafeRawPointer($0).assumingMemoryBound(to: sockaddr.self), &len)
         }
     }
 }
