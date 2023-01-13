@@ -21,6 +21,15 @@ extension sockaddr_in {
     }
     @inlinable
     @inline(__always)
+    init(host: in_addr, port: UInt16) {
+        self.init(sin_len: .init(MemoryLayout<Self>.size),
+                  sin_family: .init(AF_INET),
+                  sin_port: .init(bigEndian: port),
+                  sin_addr: host,
+                  sin_zero: (0, 0, 0, 0, 0, 0, 0, 0))
+    }
+    @inlinable
+    @inline(__always)
     init(byFilling: (UnsafeMutablePointer<sockaddr>?) -> Void) {
         self = .init()
         withUnsafeMutableBytes(of: &self) {
