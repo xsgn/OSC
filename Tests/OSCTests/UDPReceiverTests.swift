@@ -13,13 +13,13 @@ final class UDPReceiverTestCases: XCTestCase {
             XCTAssertEqual($0.rawValue, String(describing: $0).first?.asciiValue)
         }
     }
-//    final func testSend() {
-//        var message = Message(address: "/filter")
-//        message.append(10.0)
-//        message.append("hello")
-//        message.append(200)
-//        UDPSender().send(to: ("127.0.0.1", 5005), message: message)
-//    }
+    final func testSend() {
+        var message = Message(address: "/filter")
+        message.append(10.0)
+        message.append("hello")
+        message.append(200)
+        UDPSender().send(to: ("127.0.0.1", 7400), message: message)
+    }
 //    final func testReceive() {
 //        withExtendedLifetime(DispatchSource.udpOSC(v4: "127.0.0.1", port: 5005) {
 //            do {
