@@ -95,6 +95,9 @@ extension Message {
         guard elements.indices.contains(index) else { return.none }
         return.some(elements[index].value)
     }
+    @inlinable
+    @inline(__always)
+    public var count: Int { elements.count }
 }
 extension Message.Element {
     @inlinable
