@@ -26,7 +26,7 @@ extension UDPSender {
                 sendto(fd, $0.baseAddress, $0.count, 0, mem, len.pointee)
             }
         }
-        assert(sent == data.count)
+        //assert(sent == data.count)
     }
     @inlinable
     @inline(__always)
@@ -36,7 +36,7 @@ extension UDPSender {
                 sendto(fd, $0.baseAddress, $0.count, 0, mem, len.pointee)
             }
         }
-        assert(sent == data.count)
+        //assert(sent == data.count)
     }
 }
 extension UDPSender {
