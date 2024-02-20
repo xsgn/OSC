@@ -20,43 +20,37 @@ public final class UDPSender {
 extension UDPSender {
     @inlinable
     @inline(__always)
-    final func send(to: (String, UInt16), data: Data) {
-        let sent = sockaddr_in(host: to.0, port: to.1).bind { (mem, len) in
-            data.withUnsafeBytes {
-                sendto(fd, $0.baseAddress, $0.count, 0, mem, len.pointee)
-            }
-        }
-        assert(sent == data.count)
-    }
-    @inlinable
-    @inline(__always)
-    final func send(to: (in_addr, UInt16), data: Data) {
-        let sent = sockaddr_in(host: to.0, port: to.1).bind { (mem, len) in
-            data.withUnsafeBytes {
-                sendto(fd, $0.baseAddress, $0.count, 0, mem, len.pointee)
-            }
+    final func send(to ref: UnsafePointer<sockaddr>, data: Data) {
+        let sent = data.withUnsafeBytes {
+            sendto(fd, $0.baseAddress, $0.count, 0, ref, .init(ref.pointee.sa_len))
         }
         assert(sent == data.count)
     }
     @inlinable
     @inline(__always)
     final func send(to sockaddr: sockaddr_in, data: Data) {
-        let sent = sockaddr.bind {(mem, len)in
-            data.withUnsafeBytes {
-                sendto(fd, $0.baseAddress, $0.count, 0, mem, len.pointee)
-            }
+        sockaddr.bind {
+            assert($0.pointee.sa_len == $1.pointee)
+            send(to: $0, data: data)
         }
-        assert(sent == data.count)
     }
     @inlinable
     @inline(__always)
     final func send(to sockaddr: sockaddr_in6, data: Data) {
-        let sent = sockaddr.bind {(mem, len)in
-            data.withUnsafeBytes {
-                sendto(fd, $0.baseAddress, $0.count, 0, mem, len.pointee)
-            }
+        sockaddr.bind {
+            assert($0.pointee.sa_len == $1.pointee)
+            send(to: $0, data: data)
         }
-        assert(sent == data.count)
+    }
+    @inlinable
+    @inline(__always)
+    final func send(to: (String, UInt16), data: Data) {
+        send(to: sockaddr_in(host: to.0, port: to.1), data: data)
+    }
+    @inlinable
+    @inline(__always)
+    final func send(to: (in_addr, UInt16), data: Data) {
+        send(to: sockaddr_in(host: to.0, port: to.1), data: data)
     }
 }
 extension UDPSender {
