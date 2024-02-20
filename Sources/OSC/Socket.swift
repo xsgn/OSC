@@ -7,7 +7,8 @@
 import Foundation
 protocol SockaddrCompatible {
     @inline(__always)
-    func Sockaddr<R>(closure: (UnsafePointer<sockaddr>, UnsafePointer<socklen_t>) throws -> R) rethrows -> R
+    func bind<R>(closure: (UnsafePointer<sockaddr>, UnsafePointer<socklen_t>) throws -> R) rethrows -> R
+    
 }
 extension sockaddr_in {
     @inlinable
@@ -40,7 +41,7 @@ extension sockaddr_in {
 extension sockaddr_in : SockaddrCompatible {
     @inlinable
     @inline(__always)
-    func Sockaddr<R>(closure: (UnsafePointer<sockaddr>, UnsafePointer<socklen_t>) throws -> R) rethrows -> R {
+    func bind<R>(closure: (UnsafePointer<sockaddr>, UnsafePointer<socklen_t>) throws -> R) rethrows -> R {
         try withUnsafePointer(to: self) {
             var len = socklen_t(sin_len)
             return try closure(UnsafeRawPointer($0).assumingMemoryBound(to: sockaddr.self), &len)
@@ -59,10 +60,11 @@ extension sockaddr_in6 {
 extension sockaddr_in6 : SockaddrCompatible {
     @inlinable
     @inline(__always)
-    func Sockaddr<R>(closure: (UnsafePointer<sockaddr>, UnsafePointer<socklen_t>) throws -> R) rethrows -> R {
+    func bind<R>(closure: (UnsafePointer<sockaddr>, UnsafePointer<socklen_t>) throws -> R) rethrows -> R {
         try withUnsafePointer(to: self) {
             var len = socklen_t(sin6_len)
             return try closure(UnsafeRawPointer($0).assumingMemoryBound(to: sockaddr.self), &len)
         }
     }
 }
+
